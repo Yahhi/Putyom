@@ -2,8 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ru.develop_for_android.putyom">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <application
         android:allowBackup="true"
+        android:name=".MyApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -19,6 +28,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="com.here.android.maps.appid"
+            android:value="aCWG24PQqSIdJ326lS70" />
+        <meta-data
+            android:name="com.here.android.maps.apptoken"
+            android:value="fU8fEQqNjVWJYjbcw0BZtw" />
+        <meta-data
+            android:name="com.here.android.maps.license.key"
+            android:value="Sa4nfkHJyIBWz4pYp07wryoDCqgsXV73/dR4BXMbB3LthXcfmbr+m9DM23XOA90upG/SOfTDQ7rzS9ILQi7UjBt5pFwTW23XBnRqiu5ywKZACjBsrSBHT/Ac/7nPhZVt5c9X/MRxH773EYHOSc2PSCUN79qgMKWn/UOBT9zIVRMbLKPtttwfvIsjQmPHoUkNLP2hyySiRDDXJiGZ/lNYSTNpUwPi9d9pYxa+aKHeQ3zE0r9yZkLkMZTUdPmactlv3CRXrlbC7s1QAKyXiAP9yWc2CUgAjLNmwKvgH1DhFYPBPIafCQuCGkS35xWNL936UzXb2OpToxq2UHWQDKqciKpO4kFqgBkpP5cO8Avf2IL7lbjACW7wtHQQtBdcG5Y5w88M0hC7HUbMnsBNHLRW65nqaV+9whfodPWYMqrTPIeWgymFHfdUs4d+zPvtsrYmBRNK6tsBt4IsBBzJUE8ddoQp1mxxqxMoxonI73q9O2/9HzyQ/4FPsxZi4FYvDh6cKoClw7k6Kj0gSrXxbqmNsX6sn//wzYDdgTQO6I6MpzlPKvrq3q+xIl00RlCREsiwbEZm9KIyawf810BSfJnhcdfvziz+u8ToiY8KEddIv4B3m/BbVLNCbXvhPLfv/YAfvJ+C/DGe7Sh09cdAKrOozY1g9Kv68fMyIHYbR25fu+A=" />
+        <meta-data
+            android:name="INTENT_NAME"
+            android:value="ru.develop_for_android.intent" />
+        <service
+            android:name="com.here.android.mpa.service.MapService"
+            android:label="ru.develop_for_android.service"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="ru.develop_for_android.intent"></action>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
