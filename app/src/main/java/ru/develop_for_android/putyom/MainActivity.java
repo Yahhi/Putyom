@@ -1,13 +1,14 @@
 package ru.develop_for_android.putyom;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -24,6 +25,7 @@ import timber.log.Timber;
 public class MainActivity extends AppCompatActivity {
 
     private MapFragmentView mapFragmentView;
+    private MapViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,16 +34,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        setupViewModel();
+
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+        fab.setOnClickListener(view -> {
+            if (mapFragmentView != null) {
+                mapFragmentView.showCurrentPosition();
             }
         });
 
         showPermissionRequest();
+    }
+
+    private void setupViewModel() {
+        viewModel = ViewModelProviders.of(this).get(MapViewModel.class);
     }
 
     private void showPermissionRequest() {
@@ -56,13 +62,8 @@ public class MainActivity extends AppCompatActivity {
                 ).withListener(new MultiplePermissionsListener() {
             @Override public void onPermissionsChecked(MultiplePermissionsReport report) {
                 if (report.isAnyPermissionPermanentlyDenied()) {
-                    Snackbar.make(findViewById(R.id.main_view), "Location access required to show your position on map", Snackbar.LENGTH_LONG)
-                            .setAction("Grant", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    showPermissionRequest();
-                                }
-                            }).show();
+                    Snackbar.make(findViewById(R.id.main_view), getString(R.string.extract_position), Snackbar.LENGTH_LONG)
+                            .setAction(getString(R.string.grant), v -> showPermissionRequest()).show();
                 } else {
                     setupMapFragmentView();
                 }
@@ -94,8 +95,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_add) {
+            startActivity(new Intent(getBaseContext(), SetDeviceActivity.class));
             return true;
+        } else if (id == R.id.action_remove) {
+            startActivity(new Intent(getBaseContext(), RemoveDeviceActivity.class));
         }
 
         return super.onOptionsItemSelected(item);

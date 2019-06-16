@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Путём</string>
-    <string name="action_settings">Настройки</string>
+    <string name="action_add">Установить знак</string>
+    <string name="action_remove">Убрать знак</string>
+    <string name="grant">Предоставить</string>
+    <string name="extract_position">Необходимо предоставить разрешения на использование функций устройства</string>
+    <string name="title_activity_set_device">Установка устройства</string>
+    <string name="cancelled">Отменено</string>
+    <string name="title_activity_remove_device">Возврат устройства</string>
 </resources>

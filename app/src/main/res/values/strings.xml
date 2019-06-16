@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Putyom</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_add">Set smart sign</string>
+    <string name="action_remove">Set smart sign</string>
+    <string name="grant">Grant</string>
+    <string name="extract_position">Permissions required to show your position on map</string>
+    <string name="title_activity_set_device">Setup Device</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="title_activity_remove_device">Remove Device</string>
 </resources>

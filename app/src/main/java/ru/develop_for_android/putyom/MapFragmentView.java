@@ -3,14 +3,13 @@ package ru.develop_for_android.putyom;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.TypedValue;
 import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
@@ -57,14 +56,18 @@ class MapFragmentView {
     private final LinkedList<MapCircle> m_circles = new LinkedList<>();
     private final LinkedList<MapMarker> m_map_markers = new LinkedList<>();
 
-    /**
-     * Initial UI button on map fragment view. It includes several buttons to add/remove map objects
-     * such as MapPolygon, MapPolyline, MapCircle and MapMarker.
-     *
-     * @param activity
-     */
-    public MapFragmentView(AppCompatActivity activity) {
+    private MapViewModel viewModel;
+    private GeoCoordinate myCurrentLocation;
+    private MapMarker myLocationMarker;
+
+    MapFragmentView(AppCompatActivity activity) {
         m_activity = activity;
+        viewModel = ViewModelProviders.of(activity).get(MapViewModel.class);
+        viewModel.myPosition.observe(activity, location -> {
+            if (location != null) {
+                showCurrentPosition();
+            }
+        });
         initMapFragment();
     }
 
@@ -86,7 +89,7 @@ class MapFragmentView {
             Bundle bundle = ai.metaData;
             intentName = bundle.getString("INTENT_NAME");
         } catch (PackageManager.NameNotFoundException e) {
-            Timber.e("Failed to find intent name, NameNotFound: " + e.getMessage());
+            Timber.e("Failed to find intent name, NameNotFound: %s", e.getMessage());
         }
 
         boolean success = com.here.android.mpa.common.MapSettings.setIsolatedDiskCacheRootPath(diskCacheRoot, intentName);
@@ -98,87 +101,28 @@ class MapFragmentView {
         } else {
             if (m_mapFragment != null) {
                 /* Initialize the SupportMapFragment, results will be given via the called back. */
-                m_mapFragment.init(new OnEngineInitListener() {
-                    @Override
-                    public void onEngineInitializationCompleted(OnEngineInitListener.Error error) {
+                m_mapFragment.init(error -> {
 
-                        if (error == Error.NONE) {
-                            /*
-                             * If no error returned from map fragment initialization, the map will be
-                             * rendered on screen at this moment.Further actions on map can be provided
-                             * by calling Map APIs.
-                             */
-                            m_map = m_mapFragment.getMap();
+                    if (error == OnEngineInitListener.Error.NONE) {
+                        /*
+                         * If no error returned from map fragment initialization, the map will be
+                         * rendered on screen at this moment.Further actions on map can be provided
+                         * by calling Map APIs.
+                         */
+                        m_map = m_mapFragment.getMap();
 
-                            /*
-                             * Set the map center to the 4350 Still Creek Dr Burnaby BC (no animation).
-                             */
-                            m_map.setCenter(new GeoCoordinate(49.259149, -123.008555, 0.0),
-                                    Map.Animation.NONE);
+                        /* Set the zoom level to the average between min and max zoom level. */
+                        m_map.setZoomLevel(14);
 
-                            /* Set the zoom level to the average between min and max zoom level. */
-                            m_map.setZoomLevel(14);
+                        m_activity.supportInvalidateOptionsMenu();
 
-                            m_activity.supportInvalidateOptionsMenu();
-
-                        } else {
-                            Timber.e(error.getThrowable(), "onEngineInitializationCompleted: " +
-                                    "ERROR=" + error.getDetails());
-                        }
+                    } else {
+                        Timber.e(error.getThrowable(), "onEngineInitializationCompleted: " +
+                                "ERROR=" + error.getDetails());
                     }
                 });
             }
         }
-    }
-
-    boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case ADD_MARKER_MENU_ID:
-                addMapMarkerObject();
-                break;
-            case REMOVE_MARKER_MENU_ID:
-                if (!m_map_markers.isEmpty()) {
-                    m_map.removeMapObject(m_map_markers.removeLast());
-                }
-                break;
-            case ADD_POLYGON_MENU_ID:
-                addPolygonObject();
-                break;
-            case REMOVE_POLYGON_MENU_ID:
-                if (!m_polygons.isEmpty()) {
-                    m_map.removeMapObject(m_polygons.removeLast());
-                }
-                break;
-            case ADD_POLYLINE_MENU_ID:
-                addPolylineObject();
-                break;
-            case REMOVE_POLYLINE_MENU_ID:
-                if (!m_polylines.isEmpty()) {
-                    m_map.removeMapObject(m_polylines.removeLast());
-                }
-                break;
-            case ADD_CIRCLE_MENU_ID:
-                addCircleObject();
-                break;
-            case REMOVE_CIRCLE_MENU_ID:
-                if (!m_circles.isEmpty()) {
-                    m_map.removeMapObject(m_circles.removeLast());
-                }
-                break;
-
-            case NAVIGATE_TO_MENU_ID:
-                if (!m_map_markers.isEmpty()) {
-                    int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                            100, m_activity.getResources().getDisplayMetrics());
-                    navigateToMapMarkers(m_map_markers, padding);
-                } else {
-                    Toast.makeText(m_activity, "There is no any map markers added on the map",
-                            Toast.LENGTH_SHORT).show();
-                }
-                break;
-        }
-
-        return true;
     }
 
     boolean onCreateOptionsMenu(Menu menu) {
@@ -202,7 +146,7 @@ class MapFragmentView {
         // create an bounding box centered at current cent
         GeoBoundingBox boundingBox = new GeoBoundingBox(m_map.getCenter(), 1000, 1000);
         // add boundingbox's four vertices to list of Geocoordinates.
-        List<GeoCoordinate> coordinates = new ArrayList<GeoCoordinate>();
+        List<GeoCoordinate> coordinates = new ArrayList<>();
         coordinates.add(boundingBox.getTopLeft());
         coordinates.add(new GeoCoordinate(boundingBox.getTopLeft().getLatitude(),
                 boundingBox.getBottomRight().getLongitude(),
@@ -231,7 +175,7 @@ class MapFragmentView {
         // create boundingBox centered at current location
         GeoBoundingBox boundingBox = new GeoBoundingBox(m_map.getCenter(), 1000, 1000);
         // add boundingBox's top left and bottom right vertices to list of GeoCoordinates
-        List<GeoCoordinate> coordinates = new ArrayList<GeoCoordinate>();
+        List<GeoCoordinate> coordinates = new ArrayList<>();
         coordinates.add(boundingBox.getTopLeft());
         coordinates.add(boundingBox.getBottomRight());
         // create GeoPolyline with list of GeoCoordinates
@@ -263,20 +207,19 @@ class MapFragmentView {
     /**
      * create a MapMarker and add the MapMarker to active map view.
      */
-    private void addMapMarkerObject() {
+    private MapMarker addMapMarkerObject(int imageResource, GeoCoordinate coordinate) {
         // create an image from cafe.png.
         Image marker_img = new Image();
         try {
-            marker_img.setImageResource(R.drawable.ic_sign);
+            marker_img.setImageResource(imageResource);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // create a MapMarker centered at current location with png image.
-        MapMarker marker = new MapMarker(m_map.getCenter(), marker_img);
-        // add a MapMarker to current active map.
-        m_map.addMapObject(marker);
+        MapMarker marker = new MapMarker(coordinate, marker_img);
 
+        m_map.addMapObject(marker);
         m_map_markers.add(marker);
+        return marker;
     }
 
     private void navigateToMapMarkers(List<MapMarker> markers, int padding) {
@@ -305,4 +248,16 @@ class MapFragmentView {
         m_map.zoomTo(box, viewRect, Map.Animation.LINEAR, Map.MOVE_PRESERVE_ORIENTATION);
     }
 
+    public void showCurrentPosition() {
+        Location myPosition = viewModel.myPosition.getValue();
+        if (myPosition == null) return;
+        GeoCoordinate myPositionCoordinate = new GeoCoordinate(myPosition.getLatitude(), myPosition.getLongitude(), myPosition.getAltitude());
+        if (myCurrentLocation != null) {
+            m_map_markers.remove(myLocationMarker);
+            m_map.removeMapObject(myLocationMarker);
+        }
+        myLocationMarker = addMapMarkerObject(R.drawable.my_position, myPositionCoordinate);
+        myCurrentLocation = myPositionCoordinate;
+        m_map.setCenter(myPositionCoordinate, Map.Animation.NONE);
+    }
 }
