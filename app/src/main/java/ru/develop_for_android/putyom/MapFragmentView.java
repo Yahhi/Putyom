@@ -6,24 +6,29 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Environment;
-import android.view.Menu;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
-import com.here.android.mpa.common.GeoPolygon;
 import com.here.android.mpa.common.GeoPolyline;
 import com.here.android.mpa.common.Image;
 import com.here.android.mpa.common.OnEngineInitListener;
 import com.here.android.mpa.common.ViewRect;
 import com.here.android.mpa.mapping.Map;
-import com.here.android.mpa.mapping.MapCircle;
 import com.here.android.mpa.mapping.MapMarker;
-import com.here.android.mpa.mapping.MapPolygon;
+import com.here.android.mpa.mapping.MapObject;
 import com.here.android.mpa.mapping.MapPolyline;
+import com.here.android.mpa.mapping.MapRoute;
 import com.here.android.mpa.mapping.SupportMapFragment;
+import com.here.android.mpa.routing.CoreRouter;
+import com.here.android.mpa.routing.RouteOptions;
+import com.here.android.mpa.routing.RoutePlan;
+import com.here.android.mpa.routing.RouteResult;
+import com.here.android.mpa.routing.RouteWaypoint;
+import com.here.android.mpa.routing.Router;
+import com.here.android.mpa.routing.RoutingError;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +36,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import ru.develop_for_android.putyom.model.SmartDevice;
 import timber.log.Timber;
 
 /**
@@ -51,10 +57,10 @@ class MapFragmentView {
     private AppCompatActivity m_activity;
     private Map m_map;
 
-    private final LinkedList<MapPolygon> m_polygons = new LinkedList<>();
     private final LinkedList<MapPolyline> m_polylines = new LinkedList<>();
-    private final LinkedList<MapCircle> m_circles = new LinkedList<>();
     private final LinkedList<MapMarker> m_map_markers = new LinkedList<>();
+    private final List<MapObject> signMarkers = new ArrayList<>();
+    private final List<MapObject> routes = new ArrayList<>();
 
     private MapViewModel viewModel;
     private GeoCoordinate myCurrentLocation;
@@ -66,6 +72,21 @@ class MapFragmentView {
         viewModel.myPosition.observe(activity, location -> {
             if (location != null) {
                 showCurrentPosition();
+            }
+        });
+        viewModel.devices.observe(activity, smartDevices -> {
+            if (smartDevices == null || m_map == null) return;
+            m_map.removeMapObjects(signMarkers);
+            for (SmartDevice device : smartDevices) {
+                addSign(device);
+            }
+        });
+        viewModel.routesSource.observe(activity, doubles -> {
+            if (doubles == null || m_map == null) return;
+            m_map.removeMapObjects(routes);
+            for (double[] routeSource : doubles) {
+                createRoute(new GeoCoordinate(routeSource[0], routeSource[1]),
+                        new GeoCoordinate(routeSource[2], routeSource[3]));
             }
         });
         initMapFragment();
@@ -114,6 +135,22 @@ class MapFragmentView {
                         /* Set the zoom level to the average between min and max zoom level. */
                         m_map.setZoomLevel(14);
 
+                        if (viewModel.devices.getValue() != null) {
+                            m_map.removeMapObjects(signMarkers);
+                            signMarkers.clear();
+                            for (SmartDevice device : viewModel.devices.getValue()) {
+                                addSign(device);
+                            }
+                        }
+                        if (viewModel.routesSource.getValue() != null) {
+                            m_map.removeMapObjects(routes);
+                            routes.clear();
+                            for (double[] routeSource : viewModel.routesSource.getValue()) {
+                                createRoute(new GeoCoordinate(routeSource[0], routeSource[1]),
+                                        new GeoCoordinate(routeSource[2], routeSource[3]));
+                            }
+                        }
+
                         m_activity.supportInvalidateOptionsMenu();
 
                     } else {
@@ -125,47 +162,65 @@ class MapFragmentView {
         }
     }
 
-    boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, ADD_MARKER_MENU_ID, ADD_MARKER_MENU_ID, "Add Marker");
-        menu.add(0, REMOVE_MARKER_MENU_ID, REMOVE_MARKER_MENU_ID, "Remove Marker");
-        menu.add(0, ADD_POLYGON_MENU_ID, ADD_POLYGON_MENU_ID, "Add Polygon");
-        menu.add(0, REMOVE_POLYGON_MENU_ID, REMOVE_POLYGON_MENU_ID, "Remove polygon");
-        menu.add(0, ADD_POLYLINE_MENU_ID, ADD_POLYLINE_MENU_ID, "Add polyline");
-        menu.add(0, REMOVE_POLYLINE_MENU_ID, REMOVE_POLYLINE_MENU_ID, "Remove polyline");
-        menu.add(0, ADD_CIRCLE_MENU_ID, ADD_CIRCLE_MENU_ID, "Add circle");
-        menu.add(0, REMOVE_CIRCLE_MENU_ID, REMOVE_CIRCLE_MENU_ID, "Remove circle");
-        menu.add(0, NAVIGATE_TO_MENU_ID, NAVIGATE_TO_MENU_ID, "Navigate to added markers");
+    private void createRoute(GeoCoordinate start, GeoCoordinate end) {
+        /* Initialize a CoreRouter */
+        CoreRouter coreRouter = new CoreRouter();
 
-        return true;
-    }
+        /* Initialize a RoutePlan */
+        RoutePlan routePlan = new RoutePlan();
 
-    /**
-     * Create a MapPolygon and add the MapPolygon to active map view.
-     */
-    private void addPolygonObject() {
-        // create an bounding box centered at current cent
-        GeoBoundingBox boundingBox = new GeoBoundingBox(m_map.getCenter(), 1000, 1000);
-        // add boundingbox's four vertices to list of Geocoordinates.
-        List<GeoCoordinate> coordinates = new ArrayList<>();
-        coordinates.add(boundingBox.getTopLeft());
-        coordinates.add(new GeoCoordinate(boundingBox.getTopLeft().getLatitude(),
-                boundingBox.getBottomRight().getLongitude(),
-                boundingBox.getTopLeft().getAltitude()));
-        coordinates.add(boundingBox.getBottomRight());
-        coordinates.add(new GeoCoordinate(boundingBox.getBottomRight().getLatitude(),
-                boundingBox.getTopLeft().getLongitude(), boundingBox.getTopLeft().getAltitude()));
-        // create GeoPolygon with list of GeoCoordinates.
-        GeoPolygon geoPolygon = new GeoPolygon(coordinates);
-        // create MapPolygon with GeoPolygon.
-        MapPolygon polygon = new MapPolygon(geoPolygon);
-        // set line color, fill color and line width
-        polygon.setLineColor(Color.RED);
-        polygon.setFillColor(Color.GRAY);
-        polygon.setLineWidth(12);
-        // add MapPolygon to map.
-        m_map.addMapObject(polygon);
+        /*
+         * Initialize a RouteOption.HERE SDK allow users to define their own parameters for the
+         * route calculation,including transport modes,route types and route restrictions etc.Please
+         * refer to API doc for full list of APIs
+         */
+        RouteOptions routeOptions = new RouteOptions();
+        /* Other transport modes are also available e.g Pedestrian */
+        routeOptions.setTransportMode(RouteOptions.TransportMode.PEDESTRIAN);
+        routeOptions.setHighwaysAllowed(true);
+        routeOptions.setRouteType(RouteOptions.Type.SHORTEST);
+        /* Calculate 1 route. */
+        routeOptions.setRouteCount(1);
+        /* Finally set the route option */
+        routePlan.setRouteOptions(routeOptions);
 
-        m_polygons.add(polygon);
+        /* Define waypoints for the route */
+        /* START: 4350 Still Creek Dr */
+        RouteWaypoint startPoint = new RouteWaypoint(start);
+        /* END: Langley BC */
+        RouteWaypoint destination = new RouteWaypoint(end);
+
+        /* Add both waypoints to the route plan */
+        routePlan.addWaypoint(startPoint);
+        routePlan.addWaypoint(destination);
+
+        /* Trigger the route calculation,results will be called back via the listener */
+        coreRouter.calculateRoute(routePlan,
+                new Router.Listener<List<RouteResult>, RoutingError>() {
+                    @Override
+                    public void onProgress(int i) {
+                        /* The calculation progress can be retrieved in this callback. */
+                    }
+
+                    @Override
+                    public void onCalculateRouteFinished(List<RouteResult> routeResults,
+                                                         RoutingError routingError) {
+                        /* Calculation is done. Let's handle the result */
+                        if (routingError == RoutingError.NONE) {
+                            if (routeResults.get(0).getRoute() != null) {
+                                /* Create a MapRoute so that it can be placed on the map */
+                                MapRoute m_mapRoute = new MapRoute(routeResults.get(0).getRoute());
+
+                                /* Show the maneuver number on top of the route */
+                                m_mapRoute.setManeuverNumberVisible(true);
+
+                                /* Add the MapRoute to the map */
+                                m_map.addMapObject(m_mapRoute);
+                                routes.add(m_mapRoute);
+                            }
+                        }
+                    }
+                });
     }
 
     /**
@@ -187,21 +242,6 @@ class MapFragmentView {
         m_map.addMapObject(polyline);
 
         m_polylines.add(polyline);
-    }
-
-
-    /**
-     * create a MapCircle and add the MapCircle to active map view.
-     */
-    private void addCircleObject() {
-        // create a MapCircle centered at current location with radius 400
-        MapCircle circle = new MapCircle(400.0, m_map.getCenter());
-        circle.setLineColor(Color.BLUE);
-        circle.setFillColor(Color.GRAY);
-        circle.setLineWidth(12);
-        m_map.addMapObject(circle);
-
-        m_circles.add(circle);
     }
 
     /**
@@ -248,7 +288,7 @@ class MapFragmentView {
         m_map.zoomTo(box, viewRect, Map.Animation.LINEAR, Map.MOVE_PRESERVE_ORIENTATION);
     }
 
-    public void showCurrentPosition() {
+    void showCurrentPosition() {
         Location myPosition = viewModel.myPosition.getValue();
         if (myPosition == null) return;
         GeoCoordinate myPositionCoordinate = new GeoCoordinate(myPosition.getLatitude(), myPosition.getLongitude(), myPosition.getAltitude());
@@ -259,5 +299,11 @@ class MapFragmentView {
         myLocationMarker = addMapMarkerObject(R.drawable.my_position, myPositionCoordinate);
         myCurrentLocation = myPositionCoordinate;
         m_map.setCenter(myPositionCoordinate, Map.Animation.NONE);
+    }
+
+    private void addSign(SmartDevice device) {
+        GeoCoordinate deviceCoordinate = new GeoCoordinate(device.latitude, device.longitude);
+        myLocationMarker = addMapMarkerObject(R.drawable.construction, deviceCoordinate);
+        signMarkers.add(myLocationMarker);
     }
 }

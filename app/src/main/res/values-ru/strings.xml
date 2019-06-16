@@ -5,7 +5,14 @@
     <string name="action_remove">Убрать знак</string>
     <string name="grant">Предоставить</string>
     <string name="extract_position">Необходимо предоставить разрешения на использование функций устройства</string>
-    <string name="title_activity_set_device">Установка устройства</string>
+    <string name="title_activity_set_device">Выберите работу</string>
     <string name="cancelled">Отменено</string>
     <string name="title_activity_remove_device">Возврат устройства</string>
+    <string name="find_me">Где я?</string>
+    <string name="update_map">Обновить карту</string>
+    <string name="plan">План:</string>
+    <string name="second_sign">Второй знак</string>
+    <string name="address">Адрес</string>
+    <string name="first_sign">Первый знак</string>
+    <string name="fact">Факт:</string>
 </resources>

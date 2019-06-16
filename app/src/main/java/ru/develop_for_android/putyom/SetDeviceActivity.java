@@ -15,16 +15,12 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import ru.develop_for_android.putyom.model.Contractor;
 import ru.develop_for_android.putyom.model.RepairEvent;
-import ru.develop_for_android.putyom.model.SmartDevice;
 import ru.develop_for_android.putyom.model.WorkDeviceAttachment;
 import ru.develop_for_android.putyom.networking.RetrofitSingle;
 import ru.develop_for_android.putyom.networking.SimpleService;
@@ -67,32 +63,16 @@ public class SetDeviceActivity extends AppCompatActivity implements WorkSelectLi
         call.enqueue(new Callback<List<RepairEvent>>() {
             @Override
             public void onResponse(@NotNull Call<List<RepairEvent>> call, @NotNull Response<List<RepairEvent>> response) {
-                //adapter.initialize(response.body());
-
-                List<RepairEvent> events = new ArrayList<>();
-                SmartDevice[] devArr = new SmartDevice[0];
-                events.add(new RepairEvent(1, new Date(), new Date(2019, 7, 10),
-                        null, devArr, new Contractor(115, "Дядя Вася"), 5, new String[0]));
-                events.add(new RepairEvent(2, new Date(), new Date(2019, 7, 10),
-                        null, devArr, new Contractor(120, "ООО Рога"), 5, new String[0]));
-                adapter.initialize(events);
+                adapter.initialize(response.body());
             }
 
             @Override
             public void onFailure(@NotNull Call<List<RepairEvent>> call, @NotNull Throwable t) {
                 Toast.makeText(getBaseContext(), t.getMessage(), Toast.LENGTH_LONG).show();
-                List<RepairEvent> events = new ArrayList<>();
-                SmartDevice[] devArr = new SmartDevice[0];
-                events.add(new RepairEvent(1, new Date(), new Date(2019, 7, 10),
-                        null, devArr, new Contractor(115, "Дядя Вася"), 5, new String[0]));
-                events.add(new RepairEvent(2, new Date(), new Date(2019, 7, 10),
-                        null, devArr, new Contractor(120, "ООО Рога"), 5, new String[0]));
-                adapter.initialize(events);
             }
         });
     }
 
-    // Get the results:
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
@@ -113,7 +93,7 @@ public class SetDeviceActivity extends AppCompatActivity implements WorkSelectLi
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
-                finish();
+                adapter.addSign(workId, deviceId);
             }
 
             @Override

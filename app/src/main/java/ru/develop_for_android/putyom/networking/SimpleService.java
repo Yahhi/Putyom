@@ -4,7 +4,6 @@ package ru.develop_for_android.putyom.networking;
 import java.util.List;
 
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
@@ -14,9 +13,9 @@ import ru.develop_for_android.putyom.model.WorkDeviceAttachment;
 
 public interface SimpleService {
     @GET("sign/")
-    void getDevicesList(Callback<List<SmartDevice>> callback);
+    Call<List<SmartDevice>> getDevicesList();
 
-    @GET("works/")
+    @GET("work/")
     Call<List<RepairEvent>> getWorkList();
 
     @POST("sign/activate/")

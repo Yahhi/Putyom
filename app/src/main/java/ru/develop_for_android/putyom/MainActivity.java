@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -12,14 +13,24 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import ru.develop_for_android.putyom.model.WorkDeviceAttachment;
+import ru.develop_for_android.putyom.networking.RetrofitSingle;
+import ru.develop_for_android.putyom.networking.SimpleService;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,11 +48,7 @@ public class MainActivity extends AppCompatActivity {
         setupViewModel();
 
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> {
-            if (mapFragmentView != null) {
-                mapFragmentView.showCurrentPosition();
-            }
-        });
+        fab.setOnClickListener(view -> startActivity(new Intent(getBaseContext(), RemoveDeviceActivity.class)));
 
         showPermissionRequest();
     }
@@ -89,19 +96,56 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_add) {
-            startActivity(new Intent(getBaseContext(), SetDeviceActivity.class));
-            return true;
-        } else if (id == R.id.action_remove) {
-            startActivity(new Intent(getBaseContext(), RemoveDeviceActivity.class));
+        switch (id) {
+            case R.id.action_add:
+                startActivity(new Intent(getBaseContext(), SetDeviceActivity.class));
+                return true;
+            case R.id.action_remove:
+                new IntentIntegrator(this).initiateScan();
+                return true;
+            case R.id.action_find_me:
+                if (mapFragmentView != null) {
+                    mapFragmentView.showCurrentPosition();
+                }
+                return true;
+            case R.id.action_update:
+                viewModel.loadWork();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if(result != null) {
+            if(result.getContents() == null) {
+                Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_LONG).show();
+            } else {
+                sendRemoveRequest(Integer.parseInt(result.getContents()));
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void sendRemoveRequest(int deviceId) {
+        SimpleService service = RetrofitSingle.getRetrofit(getBaseContext()).create(SimpleService.class);
+        Call<Void> call = service.sendDeactivationRequest(new WorkDeviceAttachment(0, deviceId));
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
+                viewModel.loadSigns();
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<Void> call, @NotNull Throwable t) {
+                Toast.makeText(getBaseContext(), t.getMessage(), Toast.LENGTH_LONG).show();
+
+            }
+        });
     }
 }

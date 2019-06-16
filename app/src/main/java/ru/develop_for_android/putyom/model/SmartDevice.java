@@ -4,18 +4,18 @@ import com.google.gson.annotations.SerializedName;
 
 public class SmartDevice {
     @SerializedName("id")
-    long id;
-    @SerializedName("latitude")
-    double latitude;
-    @SerializedName("longitude")
-    double longitude;
-    @SerializedName("start")
-    boolean startPoint;
+    public int id;
+    @SerializedName("lat")
+    public double latitude;
+    @SerializedName("lng")
+    public double longitude;
+    @SerializedName("workId")
+    public int workId;
 
-    public SmartDevice(long id, double latitude, double longitude, boolean startPoint) {
+    public SmartDevice(int id, double latitude, double longitude, int workId) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.startPoint = startPoint;
+        this.workId = workId;
     }
 }

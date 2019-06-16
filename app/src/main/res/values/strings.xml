@@ -7,4 +7,11 @@
     <string name="title_activity_set_device">Setup Device</string>
     <string name="cancelled">Cancelled</string>
     <string name="title_activity_remove_device">Remove Device</string>
+    <string name="find_me">Find me</string>
+    <string name="update_map">Update map</string>
+    <string name="plan">Plan:</string>
+    <string name="address">Address:</string>
+    <string name="second_sign">Second sign</string>
+    <string name="first_sign">First sign</string>
+    <string name="fact">Факт:</string>
 </resources>
