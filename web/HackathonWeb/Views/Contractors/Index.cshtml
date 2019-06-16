@@ -1,0 +1,38 @@
+@model IEnumerable<HackathonWeb.Context.Models.Contractor>
+@using HackathonWeb
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Подрядчики</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Название
+            </th>
+            <th>Кол-во работ</th>
+            <th>Бюджет</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @item.Works.Count
+            </td>
+            <td>
+
+                @Helpers.ToKMB(item.Works?.Select(i => i.FinanceArea + i.FinanceFederal + i.FinanceLocal).Sum() ?? 0)
+                ₽
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

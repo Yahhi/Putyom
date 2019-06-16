@@ -1,0 +1,283 @@
+@model HackathonWeb.Context.Models.Work
+@using HackathonWeb
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div>
+    <h4>@Model.Name</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-4">
+            Подрядчик
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Contractor.Name)
+        </dd>
+        <dt class="col-sm-4">
+            Основной перечень работ
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.WorkDetails)
+        </dd>
+    </dl>
+    <div class="row finance">
+        <div class="col-md-12">
+
+            <h4>Финиансирование</h4>
+            <hr />
+
+        </div>
+        <div class="col-md-6">
+            <dl class="row">
+                <dt class="col-sm-12">
+                    Финансирование, всего
+
+                </dt>
+                <dd class="col-sm-12 total-finance">
+                    @Helpers.ToKMB(Model.FinanceArea + Model.FinanceFederal + Model.FinanceLocal)
+            ₽
+
+
+                </dd>
+            </dl>
+
+        </div>
+        <div class="col-md-6">
+            <dl class="row">
+                <dt class="col-sm-6">
+                    Краевой бюджет
+                </dt>
+                <dd class="col-sm-6 finance-sum">
+
+                    @Helpers.ToKMB(Model.FinanceArea) ₽
+
+                </dd>
+                <dt class="col-sm-6">
+                    Муниципальный бюджет
+                </dt>
+                <dd class="col-sm-6 finance-sum">
+
+                    @Helpers.ToKMB(Model.FinanceLocal) ₽
+
+                </dd>
+                <dt class="col-sm-6">
+                    Федеральный бюджет
+                </dt>
+                <dd class="col-sm-6 finance-sum">
+
+                    @Model.FinanceFederal ₽
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>
+@if (Model.ActualStart == DateTime.MinValue)
+{
+    <div class="row" style="margin-bottom: 1rem;">
+        <div class="col-md-12">
+
+            <h4>Планируемый план ремонтно-дорожных работ</h4>
+            <hr />
+            <div class="map-wrapper">
+                <div id="mapContainer" style="height: 500px;"></div>
+                @if (Model.PlannedStartLat == 0 || Model.PlannedEndLat == 0 )
+                {
+                    <span class="map-wrapper-warning">К сожалению, информация о данной работе на карте не доступна</span>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <dl class="row">
+                <dt class="col-sm-3">
+                    Планируемая дата начала
+                </dt>
+                <dd class="col-sm-8">
+
+                    @Model.PlannedStart.ToString("dd MMM yyyy")
+
+                </dd>
+                <dt class="col-sm-3">
+                    Планируемая дата окончания
+                </dt>
+                <dd class="col-sm-8">
+
+                    @Model.PlannedEnd.ToString("dd MMM yyyy")
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+
+}
+else
+{
+    <div class="row" style="margin-bottom: 1rem;">
+        <div class="col-md-6">
+
+            <h4>Планируемый план работ</h4>
+            <hr />
+            <div id="mapContainer" style="height: 500px;"></div>
+        </div>
+        <div class="col-md-6">
+
+            <h4>Актуальный план работ</h4>
+            <hr />
+            <div id="mapContainer2" style="height: 500px;"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row">
+                <dt class="col-sm-6">
+                    Планируемая дата начала
+                </dt>
+                <dd class="col-sm-6">
+
+                    @Model.PlannedStart.ToString("dd MMM yyyy")
+                </dd>
+                <dt class="col-sm-6">
+                    Планируемая дата окончания
+                </dt>
+                <dd class="col-sm-6">
+
+                    @Model.PlannedEnd.ToString("dd MMM yyyy")
+                </dd>
+            </dl>
+        </div>
+        <div class="col-md-6">
+
+            <dl class="row">
+                <dt class="col-sm-6">
+                    Актуальная дата начала
+                </dt>
+                <dd class="col-sm-6">
+                    @Model.ActualStart.ToString("dd MMM yyyy")
+                </dd>
+                <dt class="col-sm-6">
+                    Актуальная дата окончания
+                </dt>
+                <dd class="col-sm-6">
+                    @if (Model.ActualEnd == DateTime.MinValue)
+                    {
+                        <span>В процессе работы.</span>
+                    }
+                    else {
+                        @Model.ActualEnd.ToString("dd MMM yyyy")
+                    }
+
+                </dd>
+            </dl>
+
+        </div>
+    </div>
+
+    @if ((int)(Model.ActualStart - Model.PlannedStart).TotalDays > 2)
+    {
+        <div class="warning row">
+            <div class="col-md-12">
+
+                <h4>Сроки не совпадают</h4>
+                <hr />
+
+            </div>
+            <div class="col-md-12">
+                Согласно данным нашего сервиса данные ремонтно-дорожные работы начаты с опозданием на @((int)(Model.ActualStart - Model.PlannedStart).TotalDays) дней
+                @if (Model.ActualEnd != DateTime.MinValue)
+    {
+        if ((int)(Model.ActualEnd - Model.PlannedEnd).TotalDays > 0)
+        {
+            <span> и закончены с опозданием на @((int)(Model.ActualEnd - Model.PlannedEnd).TotalDays) дней.</span><span>Общая сумма пеней составляет 0.01 % за день просрочки @((int)(Model.ActualEnd - Model.PlannedEnd).TotalDays * 0.0001 * (Model.FinanceArea + Model.FinanceFederal + Model.FinanceLocal)) </span>
+
+}
+else
+{
+            <span> и закончены в срок.</span>
+}
+}
+                . <br/><strong>Штраф (пени) по договору составляют 16 000  ₽</strong>
+            </div>
+        </div>
+    }
+}
+
+
+
+
+
+
+
+
+        <script>
+         var platform = new H.service.Platform({
+  'app_id': 'hwsacH3LqmkOHfV7DjIR',
+  'app_code': 'CVFdBhRJpDiSh9hCNUzMaw'
+});
+
+var defaultLayers = platform.createDefaultLayers();
+var group = new H.map.Group();
+var map = new H.Map(
+  document.getElementById('mapContainer'),
+  defaultLayers.normal.map);
+  var hereMapsUrl = 'https://route.api.here.com/routing/7.2/calculateroute.json?app_id=hwsacH3LqmkOHfV7DjIR&app_code=CVFdBhRJpDiSh9hCNUzMaw&representation=display'
+    hereMapsUrl = hereMapsUrl + '&waypoint0=geo!@Model.PlannedStartLat,@Model.PlannedStartLng';
+    hereMapsUrl = hereMapsUrl + '&waypoint1=geo!@Model.PlannedEndLat,@Model.PlannedEndLng';
+        hereMapsUrl = hereMapsUrl +'&mode=fastest;car;traffic:disabled;';
+        $.get(hereMapsUrl,function(data2) {
+            var lineString = new H.geo.LineString();
+
+            for(j=0;j<data2.response.route[0].leg[0].maneuver.length;j++) {
+                for(k=0;k<data2.response.route[0].leg[0].maneuver[j].shape.length;k++) {
+                    var maneuverStr = data2.response.route[0].leg[0].maneuver[j].shape[k];
+                    var lat = parseFloat(maneuverStr.split(',')[0]);
+                    var lng = parseFloat(maneuverStr.split(',')[1]);
+                    lineString.pushPoint({lat: lat, lng: lng});
+                }
+            }
+            map.addObject(new H.map.Polyline(
+                lineString, { style: { lineWidth: 15,
+        strokeColor: "#7CFC00"}}
+            ));
+            map.setViewBounds(lineString.getBounds());
+
+
+        })
+
+
+var map2 = new H.Map(
+  document.getElementById('mapContainer2'),
+  defaultLayers.normal.map);
+  var hereMapsUrl = 'https://route.api.here.com/routing/7.2/calculateroute.json?app_id=hwsacH3LqmkOHfV7DjIR&app_code=CVFdBhRJpDiSh9hCNUzMaw&representation=display'
+
+    $.get('/api/sign/bywork/?id=@Model.Id',function(data){
+        for(i=0;i<data.length;i++) {
+            hereMapsUrl = hereMapsUrl + '&waypoint'+ i + '=geo!'+data[i].lat + ',' +  data[i].lng;
+        }
+        hereMapsUrl = hereMapsUrl +'&mode=fastest;car;traffic:disabled';
+        $.get(hereMapsUrl,function(data2) {
+            var lineString = new H.geo.LineString();
+
+
+            for(j=0;j<data2.response.route[0].leg[0].maneuver.length;j++) {
+                for(k=0;k<data2.response.route[0].leg[0].maneuver[j].shape.length;k++) {
+                    var maneuverStr = data2.response.route[0].leg[0].maneuver[j].shape[k];
+                    var lat = parseFloat(maneuverStr.split(',')[0]);
+                    var lng = parseFloat(maneuverStr.split(',')[1]);
+                    lineString.pushPoint({lat: lat, lng: lng});
+                }
+            }
+
+            map2.addObject(new H.map.Polyline(
+                lineString, { style: { lineWidth: 10,
+        strokeColor: "#f00"}}
+            ));
+
+            map2.setViewBounds(lineString.getBounds());
+        })
+    });
+        </script>

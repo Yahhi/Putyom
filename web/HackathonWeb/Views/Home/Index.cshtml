@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    Layout = "_Layout-full-width";
+}
+<div id="mapContainer"></div>
+
+<script>
+    var platform = new H.service.Platform({
+    'app_id': 'hwsacH3LqmkOHfV7DjIR',
+    'app_code': 'CVFdBhRJpDiSh9hCNUzMaw'
+});
+
+var defaultLayers = platform.createDefaultLayers({
+    lg: 'rus'
+});
+
+var map = new H.Map(
+    document.getElementById('mapContainer'),
+    defaultLayers.normal.traffic, {
+        zoom: 16,
+        center: {
+            lat: 55.767868,
+            lng: 49.127115
+        }
+    });
+
+map.addLayer(defaultLayers.incidents)
+
+
+
+
+var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+// Create the default UI components
+var ui = H.ui.UI.createDefault(map, defaultLayers);
+
+
+var londonMarker = new H.map.Marker({
+    lat: 55.781207,
+    lng: 49.131165
+});
+map.addObject(londonMarker);
+
+
+var infosvgMarkup = '<?xml version="1.0" ?><svg height="25px" version="1.1" viewBox="0 0 32 32" width="25px" xmlns="http://www.w3.org/2000/svg" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" xmlns:xlink="http://www.w3.org/1999/xlink"><title/><desc/><defs/><g fill="none" fill-rule="evenodd" id="Page-1" stroke="none" stroke-width="1"><g fill="#929292" id="icon-61-warning"><path d="M14.3077969,6.05448962 C15.177863,4.64682663 16.5905922,4.65018129 17.4585848,6.05448962 L28.2436741,23.5034768 C29.4052031,25.382692 28.5591104,26.9060969 26.3549711,26.9060969 L5.41141065,26.9060969 C3.20677982,26.9060969 2.35742742,25.388761 3.52270757,23.5034768 L14.3077969,6.05448962 L14.3077969,6.05448962 Z M15.8835643,11.9060969 C15.3312795,11.9060969 14.8835643,12.3591332 14.8835643,12.903127 L14.8835643,18.9090667 C14.8835643,19.4597113 15.3274291,19.9060969 15.8835643,19.9060969 C16.435849,19.9060969 16.8835643,19.4530606 16.8835643,18.9090667 L16.8835643,12.903127 C16.8835643,12.3524825 16.4396994,11.9060969 15.8835643,11.9060969 L15.8835643,11.9060969 Z M15.8835643,23.9060969 C16.435849,23.9060969 16.8835643,23.4583816 16.8835643,22.9060969 C16.8835643,22.3538121 16.435849,21.9060969 15.8835643,21.9060969 C15.3312795,21.9060969 14.8835643,22.3538121 14.8835643,22.9060969 C14.8835643,23.4583816 15.3312795,23.9060969 15.8835643,23.9060969 L15.8835643,23.9060969 Z" id="warning"/></g></g></svg>'
+var svgMarkup = '<svg clip-rule="evenodd" fill-rule="evenodd" height="22" image-rendering="optimizeQuality" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" viewBox="0 0 25 22" width="25" xmlns="http://www.w3.org/2000/svg"><path d="m14 1c4 6 7 13 11 19 0 1 0 2-2 2-7 0-14 0-21 0-2 0-2-1-2-2 4-6 7-13 11-19 1-1 2-1 3 0z" fill="#fff"/><path d="m11 1-10 18v1c-1 1 0 2 1 2h21c1 0 2-1 1-2v-1l-10-18c-1-1-2-1-3 0zm1 19h10c0-1-1-2-1-3l-8-14h-1l-9 16v1z" fill="#f20"/><path d="m14 8c1 0 1 1 1 1v1s-1 1-1 1-1-1-1-1 0 0 0-1c0 0 0 0 0-1zm-3 8-1 3c-1 1-2 0-2 0s0-1 1-1l1-2s0 0 0-1v-1l1 1zm1-2 1-2v2zm-2-2v1c1-1 1-2 1-2h-1zm5 3 3 2s0-1 1-2l2 4h-7s1 0 1-1c1 0 2 0 2-1l-2-1h-1v3c-1 0-1 0-1 0v-3l-3-2s0 0 0-1h-1-1c0-1 0-1 0-1s2-2 2-2h2l1 1h1z"/></svg>';
+var outerElement = document.createElement('div')
+outerElement.innerHTML = svgMarkup;
+
+var infoOuterElement = document.createElement('div')
+infoOuterElement.innerHTML = infosvgMarkup;
+
+
+$.get('/api/sign', function(data) {
+    data.forEach(function(e) {
+        if (e.type != 2) {
+            //create dom icon and add/remove opacity listeners
+            var roadWorkIcon = new H.map.DomIcon(
+                outerElement, {
+                    onAttach: function(clonedElement, domIcon, domMarker) {
+                        clonedElement.addEventListener('click', function() {
+                            window.location = '/Works/Details/' + e.workId
+                        });
+                    }
+                });
+
+            var
+                roadWorkMarker = new H.map.DomMarker({
+                    lat: e.lat,
+                    lng: e.lng
+                }, {
+                    icon: roadWorkIcon
+                });
+
+            roadWorkMarker.addEventListener('mouseout', function() {
+                console.log('mouse out')
+            });
+            map.addObject(roadWorkMarker);
+
+        } else {
+            //create dom icon and add/remove opacity listeners
+            var infoRoadWorkIcon = new H.map.DomIcon(
+                infoOuterElement, {
+                    onAttach: function(clonedElement, domIcon, domMarker) {
+                        clonedElement.addEventListener('click', function() {
+                            window.location = '/Works/Details/' + e.workId
+                        });
+                    }
+                });
+
+            var
+                roadWorkMarker = new H.map.DomMarker({
+                    lat: e.lat,
+                    lng: e.lng
+                }, {
+                    icon: infoRoadWorkIcon
+                });
+
+            roadWorkMarker.addEventListener('mouseout', function() {
+                console.log('mouse out')
+            });
+            map.addObject(roadWorkMarker);
+
+        }
+
+    })
+})
+</script>
+

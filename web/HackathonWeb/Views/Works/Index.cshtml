@@ -1,0 +1,53 @@
+@model IEnumerable<HackathonWeb.Context.Models.Work>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Работы</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Название
+            </th>
+            <th>
+                Контрагент
+            </th>
+            <th>
+                Статус
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Contractor.Name)
+            </td>
+            <td>
+                @if (item.ActualStart == DateTime.MinValue) {
+                    <span>Работы не начаты</span>
+                }
+                else {
+                    @if ((item.ActualStart - item.PlannedStart).TotalDays > 2) {
+                        <span style="color: red;">Работы начаты с опозданием на @((int)(item.ActualStart - item.PlannedStart).TotalDays) дней</span>
+                    }
+                    else {
+                        <span style="color: green;">Работы начаты в срок</span>
+                    }
+                }
+
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.Id">Детали</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
