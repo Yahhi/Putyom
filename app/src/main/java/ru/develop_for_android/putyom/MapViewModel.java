@@ -24,6 +24,7 @@ import ru.develop_for_android.putyom.model.RepairEvent;
 import ru.develop_for_android.putyom.model.SmartDevice;
 import ru.develop_for_android.putyom.networking.RetrofitSingle;
 import ru.develop_for_android.putyom.networking.SimpleService;
+import timber.log.Timber;
 
 public class MapViewModel extends AndroidViewModel {
     MutableLiveData<Location> myPosition = new MutableLiveData<>();
@@ -79,13 +80,14 @@ public class MapViewModel extends AndroidViewModel {
         });
     }
 
-    public void loadSigns() {
+    void loadSigns() {
         SimpleService service = RetrofitSingle.getRetrofit(getApplication()).create(SimpleService.class);
         Call<List<SmartDevice>> call = service.getDevicesList();
         call.enqueue(new Callback<List<SmartDevice>>() {
             @Override
             public void onResponse(@NotNull Call<List<SmartDevice>> call, @NotNull Response<List<SmartDevice>> response) {
                 if (response.body() == null) return;
+                Timber.i("load complete. %s", response.body().size());
                 devices.setValue(response.body());
                 calculateLineDots(response.body());
             }

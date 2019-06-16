@@ -6,5 +6,5 @@
     android:layout_height="match_parent"
     android:id="@+id/works_list"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".SetDeviceActivity"
+    tools:context=".WorkListActivity"
     tools:showIn="@layout/activity_set_device" />

@@ -21,16 +21,16 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".RemoveDeviceActivity"
+            android:name=".WorkDetailsActivity"
             android:label="@string/title_activity_remove_device"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".WorkListActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="ru.develop_for_android.putyom.MainActivity" />
+                android:value="ru.develop_for_android.putyom.WorkListActivity" />
         </activity>
         <activity
-            android:name=".SetDeviceActivity"
+            android:name=".WorkListActivity"
             android:label="@string/title_activity_set_device"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">

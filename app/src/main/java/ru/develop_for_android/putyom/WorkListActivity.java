@@ -2,6 +2,8 @@ package ru.develop_for_android.putyom;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +11,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -25,8 +26,9 @@ import ru.develop_for_android.putyom.model.WorkDeviceAttachment;
 import ru.develop_for_android.putyom.networking.RetrofitSingle;
 import ru.develop_for_android.putyom.networking.SimpleService;
 
-public class SetDeviceActivity extends AppCompatActivity implements WorkSelectListener {
+public class WorkListActivity extends AppCompatActivity implements WorkSelectListener {
     private final static String KEY_SELECTED_WORK = "workId";
+    private final static int REQUEST_MODIFY_WORK = 1742;
 
     WorkListAdapter adapter;
     private int workId;
@@ -49,11 +51,6 @@ public class SetDeviceActivity extends AppCompatActivity implements WorkSelectLi
             workId = savedInstanceState.getInt(KEY_SELECTED_WORK);
         }
 
-        FloatingActionButton floatingActionButton = findViewById(R.id.fab);
-        floatingActionButton.setOnClickListener(v -> {
-            workId = 2;
-            sendAddRequest(3);
-        });
         getWorkList();
     }
 
@@ -74,26 +71,48 @@ public class SetDeviceActivity extends AppCompatActivity implements WorkSelectLi
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_remove_sign, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_remove) {
+            new IntentIntegrator(this).initiateScan();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if(result != null) {
-            if(result.getContents() == null) {
-                Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_LONG).show();
-            } else {
-                sendAddRequest(Integer.parseInt(result.getContents()));
-            }
+        if (requestCode == REQUEST_MODIFY_WORK) {
+            getWorkList();
         } else {
-            super.onActivityResult(requestCode, resultCode, data);
+            IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+            if (result != null) {
+                if (result.getContents() == null) {
+                    Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_LONG).show();
+                } else {
+                    sendRemoveRequest(Integer.parseInt(result.getContents()));
+                }
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+            }
         }
     }
 
-    private void sendAddRequest(int deviceId) {
+    private void sendRemoveRequest(int deviceId) {
         SimpleService service = RetrofitSingle.getRetrofit(getBaseContext()).create(SimpleService.class);
-        Call<Void> call = service.sendActivationRequest(new WorkDeviceAttachment(workId, deviceId));
+        Call<Void> call = service.sendDeactivationRequest(new WorkDeviceAttachment(0, deviceId));
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
-                adapter.addSign(workId, deviceId);
+                adapter.removeSign(deviceId);
             }
 
             @Override
@@ -111,8 +130,9 @@ public class SetDeviceActivity extends AppCompatActivity implements WorkSelectLi
     }
 
     @Override
-    public void onSelectWork(int workId) {
-        this.workId = workId;
-        new IntentIntegrator(SetDeviceActivity.this).initiateScan();
+    public void onSelectWork(RepairEvent work) {
+        Intent workDetails = new Intent(getBaseContext(), WorkDetailsActivity.class);
+        workDetails.putExtra(WorkDetailsActivity.KEY_EVENT, work);
+        startActivityForResult(workDetails, REQUEST_MODIFY_WORK);
     }
 }

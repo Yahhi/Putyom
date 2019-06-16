@@ -51,16 +51,28 @@ public class WorkListAdapter extends RecyclerView.Adapter<WorkListAdapter.WorkIt
         }
     }
 
-    void addSign(int workId, int deviceId) {
+    void removeSign(int deviceId) {
         for (int i = 0; i < works.size(); i++) {
-            if (works.get(i).contractNumber == workId) {
-                SmartDevice[] devices = new SmartDevice[works.get(i).devices.length + 1];
-                int j = 0;
-                for (SmartDevice device : works.get(i).devices) {
-                    devices[j++] = device;
+            int found = -1;
+            RepairEvent repairEvent = works.get(i);
+            SmartDevice[] devices = new SmartDevice[repairEvent.devices.length + 1];
+            for (int j = 0; j < devices.length; j++) {
+                if (repairEvent.devices[j].id == deviceId) {
+                    found = j;
+                    break;
                 }
-                devices[j] = new SmartDevice(deviceId, 0, 0, workId);
-                works.get(i).devices = devices;
+            }
+            if (found >= 0) {
+                SmartDevice[] updatedDevices = new SmartDevice[repairEvent.devices.length - 1];
+                int k = 0;
+                for (SmartDevice device : repairEvent.devices) {
+                    if (device.id != deviceId) {
+                        updatedDevices[k++] = device;
+                    }
+                }
+                repairEvent.devices = updatedDevices;
+                notifyItemChanged(found);
+                break;
             }
         }
     }
@@ -77,7 +89,7 @@ public class WorkListAdapter extends RecyclerView.Adapter<WorkListAdapter.WorkIt
             CardView mainCard = itemView.findViewById(R.id.main_card);
             mainCard.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onSelectWork(work.contractNumber);
+                    listener.onSelectWork(work);
                 }
             });
             workNumber = itemView.findViewById(R.id.contract_number);

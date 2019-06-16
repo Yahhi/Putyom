@@ -7,7 +7,7 @@
     <string name="extract_position">Необходимо предоставить разрешения на использование функций устройства</string>
     <string name="title_activity_set_device">Выберите работу</string>
     <string name="cancelled">Отменено</string>
-    <string name="title_activity_remove_device">Возврат устройства</string>
+    <string name="title_activity_remove_device">Паспорт дорожной работы</string>
     <string name="find_me">Где я?</string>
     <string name="update_map">Обновить карту</string>
     <string name="plan">План:</string>
@@ -15,4 +15,6 @@
     <string name="address">Адрес</string>
     <string name="first_sign">Первый знак</string>
     <string name="fact">Факт:</string>
+    <string name="activate_first">Активировать первый знак</string>
+    <string name="activate_second">Активировать второй знак</string>
 </resources>

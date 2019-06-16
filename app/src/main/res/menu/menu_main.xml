@@ -8,11 +8,6 @@
         android:title="@string/action_add"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_remove"
-        android:orderInCategory="101"
-        android:title="@string/action_remove"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/action_find_me"
         android:orderInCategory="110"
         android:title="@string/find_me"

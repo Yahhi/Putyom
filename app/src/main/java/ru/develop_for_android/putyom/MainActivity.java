@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         setupViewModel();
 
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> startActivity(new Intent(getBaseContext(), RemoveDeviceActivity.class)));
+        fab.setOnClickListener(view -> startActivity(new Intent(getBaseContext(), WorkDetailsActivity.class)));
 
         showPermissionRequest();
     }
@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_add:
-                startActivity(new Intent(getBaseContext(), SetDeviceActivity.class));
+                startActivity(new Intent(getBaseContext(), WorkListActivity.class));
                 return true;
             case R.id.action_remove:
                 new IntentIntegrator(this).initiateScan();
@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.action_update:
                 viewModel.loadWork();
+                viewModel.loadSigns();
                 return true;
         }
 

@@ -13,5 +13,7 @@
     <string name="address">Address:</string>
     <string name="second_sign">Second sign</string>
     <string name="first_sign">First sign</string>
-    <string name="fact">Факт:</string>
+    <string name="fact">Fact:</string>
+    <string name="activate_first">Activate first</string>
+    <string name="activate_second">Activate second</string>
 </resources>

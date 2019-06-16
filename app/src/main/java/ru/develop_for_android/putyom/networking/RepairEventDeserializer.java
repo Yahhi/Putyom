@@ -19,7 +19,7 @@ public class RepairEventDeserializer implements JsonDeserializer<RepairEvent> {
         {
             final JsonObject jsonObject = je.getAsJsonObject();
             RepairEvent repairEvent = new Gson().fromJson(je, type);
-            repairEvent.devices = jdc.deserialize(jsonObject.get("devices"), SmartDevice[].class);
+            repairEvent.devices = jdc.deserialize(jsonObject.get("signs"), SmartDevice[].class);
             repairEvent.imageAddresses = jdc.deserialize(jsonObject.get("images"), String.class);
 
             // Deserialize it. You use a new instance of Gson to avoid infinite recursion
